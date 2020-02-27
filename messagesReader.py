@@ -21,8 +21,8 @@ def checkForDiv (text):
 
 def main(args):
 
-    folderName = args.path;
-    outputName = args.output;
+    folderName = args.folder;
+    outputName = args.outputFile;
     outputType = args.type;
 
     fileBase = "storage\\" + folderName + "\\messages";
@@ -34,6 +34,7 @@ def main(args):
 
     if (outputType == 'txt'):
         senderList = [];
+        stickerSenders = [];
 
     while (readingFiles):
 
@@ -63,6 +64,7 @@ def main(args):
         nameRegex = re.compile(r'class=\"from_name\"');
         joinedRegex = re.compile(r'joined');
         stickerRegex = re.compile(r'href=\"stickers/(.+)\">');
+        gifsRegex = re.compile(r' via @');
 
         step = 0;
         divCount = 0;
@@ -123,11 +125,16 @@ def main(args):
             elif (step == 3):
                 sender = line[:-1];
 
-                newMessage.append(str(sender));
-                if (sender not in senderList):
-                    senderList.append(sender);
+                special = gifsRegex.findall(line);
 
-                step += 1;
+                if (special):
+                    step = 0;
+                else:
+                    newMessage.append(str(sender));
+                    if (sender not in senderList):
+                        senderList.append(sender);
+
+                    step += 1;
 
             # FIND THE TEXT
             elif (step == 4):
@@ -141,9 +148,11 @@ def main(args):
                     if (stickerFound):
                         divCount += 1;
 
-                        if (outputType == 'xlsx'):
-                            newMessage.append(str(stickerFound[0]));
-                            newMessage.append("sticker");
+                        newMessage.append(str(stickerFound[0]));
+                        newMessage.append("sticker");
+                        if (sender not in stickerSenders):
+                            stickerSenders.append(sender);
+
                         step = 6;
                     else:
                         divCount += checkForDiv(line);
@@ -153,10 +162,9 @@ def main(args):
             elif (step == 5):
                 messageText = line[:-1];
                 messageText = messageText.lower();
-                
+
                 newMessage.append(str(messageText));
-                if (outputType == 'xlsx'):
-                    newMessage.append("text");
+                newMessage.append("text");
                 step += 1;
 
             if (step == 6):
@@ -177,12 +185,18 @@ def main(args):
 
     else:
         for sender in senderList:
-            outputPath = "storage\\" + outputName + "_" + sender.strip() + ".txt";
+            outputBase = "storage\\" + sender.strip();
 
-            with open(outputPath, "w+", encoding="utf-8") as outputFile:
-                for line in allMessages:
-                    if (line[0] == sender and len(line) > 1):
-                        outputFile.write(line[1]+"\n");
+            outputFileText = open(outputBase+'_text.txt', "w+", encoding="utf-8");
+            if (sender in stickerSenders):
+                outputFileSticker = open(outputBase+'_sticker.txt', "w+", encoding="utf-8");
+
+            for line in allMessages:
+                if (line[0] == sender and len(line) > 2):
+                    if (line[2] == 'text'):
+                        outputFileText.write(line[1]+"\n");
+                    else:
+                        outputFileSticker.write(line[1]+"\n");
 
     print("Finished!");
     return;
@@ -191,9 +205,9 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser(description='Create a file with all the messages from a chat.');
 
-    parser.add_argument('path');
-    parser.add_argument('output');
-    parser.add_argument('--type', '-t', default='xlsx', choices=['xlsx', 'txt']);
+    parser.add_argument('FOLDER', help='Name of the history folder located in the storage/ directory');
+    parser.add_argument('--outputFile', '-o', default='MessagesOutput', help='Name of the output file with table. If the text version is chosen then the name of each file will be the name of the senders.');
+    parser.add_argument('--type', '-t', default='xlsx', choices=['xlsx', 'txt'], help='Xlsx will output one Excel file with a table of the messages. Txt will output two text file for each user, one with all text messages and the other with all stickers sent.');
     return parser.parse_args();
 
 
