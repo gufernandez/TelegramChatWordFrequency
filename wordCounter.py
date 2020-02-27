@@ -2,103 +2,57 @@
 
 import re
 import pandas as pd
+import argparse
 
-def main():
+def main(args):
 
-    filePath = "C:\\Users\\goncalg4\\Downloads\\Telegram Desktop\\test.txt";
+    filePath = "storage\\" + args.path;
+    wordList = args.words;
 
-    f = open(filePath, "r");
+    try:
+        chatFile = open(filePath, "r", encoding="utf-8");
+    except:
+        print("Non existant file.");
+        return;
+
+    targets = [];
+    targetCount = {};
+    regs = {};
+
+    for targetWord in wordList:
+        targets.append(targetWord);
+        targetCount[targetWord] = 0;
+        re_str = r''+ re.escape(targetWord);
+        regs[targetWord] = re.compile(re_str);
+
+    print(targets);
+    print(targetCount);
+    print(regs);
     print("Reading File:" + filePath);
-    f1 = f.readlines();
+    fileObject = chatFile.readlines();
 
-    target1 = re.compile(r'te amo');
-    target2 = re.compile(r'te amu');
-    target3 = re.compile(r'ti amo');
-    target4 = re.compile(r'ti amu');
-    target5 = re.compile(r'tiamo');
-    target6 = re.compile(r'tiamu');
-    target7 = re.compile(r'teamo');
-    target8 = re.compile(r'teamu');
-    target9 = re.compile(r'tinhamu');
-    target10 = re.compile(r'comer');
+    for line in fileObject:
+
+        for word in targets:
+            foundWord = regs[word].findall(line);
+            if (foundWord):
+                for matches in foundWord:
+                    targetCount[word] += 1;
 
 
-    wordCount1 = 0;
-    wordCount2 = 0;
-    wordCount3 = 0;
-    wordCount4 = 0;
-    wordCount5 = 0;
-    wordCount6 = 0;
-    wordCount7 = 0;
-    wordCount8 = 0;
-    wordCount9 = 0;
-    wordCount10 = 0;
+    chatFile.close();
 
-    for line in f1:
+    for word in targets:
+        print(word + ": " + str(targetCount[word]));
 
-        foundWord1 = target1.findall(line);
-        if (foundWord1):
-            for word in foundWord1:
-                wordCount1 += 1;
+def parse_arguments():
 
-        foundWord2 = target2.findall(line);
-        if (foundWord2):
-            for word in foundWord2:
-                wordCount2 += 1;
+    parser = argparse.ArgumentParser(description='');
 
-        foundWord3 = target3.findall(line);
-        if (foundWord3):
-            for word in foundWord3:
-                wordCount3 += 1;
-
-        foundWord4 = target4.findall(line);
-        if (foundWord4):
-            for word in foundWord4:
-                wordCount4 += 1;
-
-        foundWord5 = target5.findall(line);
-        if (foundWord5):
-            for word in foundWord5:
-                wordCount5 += 1;
-
-        foundWord6 = target6.findall(line);
-        if (foundWord6):
-            for word in foundWord6:
-                wordCount6 += 1;
-
-        foundWord7 = target7.findall(line);
-        if (foundWord7):
-            for word in foundWord7:
-                wordCount7 += 1;
-
-        foundWord8 = target8.findall(line);
-        if (foundWord8):
-            for word in foundWord8:
-                wordCount8 += 1;
-
-        foundWord9 = target9.findall(line);
-        if (foundWord9):
-            for word in foundWord9:
-                wordCount9 += 1;
-
-        foundWord10 = target10.findall(line);
-        if (foundWord10):
-            for word in foundWord10:
-                wordCount10 += 1;
-
-    f.close();
-
-    print("Te Amo: " + str(wordCount1));
-    print("Te Amu: " + str(wordCount2));
-    print("Ti Amo: " + str(wordCount3));
-    print("Ti Amu: " + str(wordCount4));
-    print("Tiamo: " + str(wordCount5));
-    print("Timu: " + str(wordCount6));
-    print("Teamo: " + str(wordCount7));
-    print("Teamu: " + str(wordCount8));
-    print("Tinhamu: " + str(wordCount9));
-    print("comer: " + str(wordCount10));
-
+    parser.add_argument('path');
+    parser.add_argument('words', nargs='+');
+    return parser.parse_args();
 
 if __name__ == "__main__":
-    main();
+    arguments = parse_arguments();
+    main(arguments);

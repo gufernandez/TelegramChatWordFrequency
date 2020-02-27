@@ -2,6 +2,7 @@
 
 import re
 import pandas as pd
+import argparse
 
 def checkForDiv (text):
     divRegex = re.compile(r'<div');
@@ -18,21 +19,43 @@ def checkForDiv (text):
         else:
             return 0;
 
-def main():
+def main(args):
 
-    fileBase = "C:\\Users\\goncalg4\\Downloads\\Telegram Desktop\\ChatExport_25_02_2020 - Pessoal\\messages";
+    folderName = args.path;
+    outputName = args.output;
+    outputType = args.type;
+
+    fileBase = "storage\\" + folderName + "\\messages";
+
     fileNumber = 1;
+    readingFiles = True;
+    readError = False;
     allMessages = [];
 
-    while (fileNumber <= 83):
+    if (outputType == 'txt'):
+        senderList = [];
+
+    while (readingFiles):
+
         if (fileNumber == 1):
             fileString = fileBase + '.html';
         else:
             fileString = fileBase + str(fileNumber) + '.html';
 
-        f = open(fileString, "r", encoding="utf-8");
-        print("Reading File:" + fileString);
-        f1 = f.readlines();
+        try:
+            htmlFile = open(fileString, "r", encoding="utf-8");
+        except:
+            if (fileNumber == 1):
+                print("Non existant file.");
+                readError = True;
+            else:
+                print("Finished reading.");
+            readingFiles = False;
+            continue;
+
+
+        print("Reading File: " + fileString);
+        fileObject = htmlFile.readlines();
 
         dateRegex = re.compile(r'title=\"(\d+\.\d+\.\d+ \d+:\d+:\d+)\"');
         textRegex = re.compile(r'class=\"text\"');
@@ -46,14 +69,13 @@ def main():
         foundName = "Null";
         isJoined = False;
 
-        for line in f1:
+        for line in fileObject:
 
             # FIND A MESSAGE
             if (step == 0):
                 foundMessage = messageRegex.findall(line);
 
                 if (foundMessage):
-                    # print(foundMessage);
                     divCount = 0;
                     newMessage = [];
 
@@ -69,10 +91,10 @@ def main():
                 foundDate = dateRegex.findall(line);
 
                 if (foundDate):
-                    # print(foundDate[0]);
                     divCount += 1;
 
-                    newMessage.append(foundDate[0]);
+                    if (outputType == 'xlsx'):
+                        newMessage.append(foundDate[0]);
 
                     step += 1;
                 else:
@@ -84,12 +106,11 @@ def main():
             # FIND THE SENDER
             elif (step == 2):
                 if (isJoined):
-                    newMessage.append(sender);
+                    newMessage.append(str(sender));
                     step = 4;
                 else:
                     foundName = nameRegex.findall(line);
                     if (foundName):
-                        # print(foundName);
                         divCount += 1;
                         step += 1;
 
@@ -101,9 +122,10 @@ def main():
             # APPEND THE SENDER
             elif (step == 3):
                 sender = line[:-1];
-                # print(sender);
 
-                newMessage.append(sender);
+                newMessage.append(str(sender));
+                if (sender not in senderList):
+                    senderList.append(sender);
 
                 step += 1;
 
@@ -111,7 +133,6 @@ def main():
             elif (step == 4):
                 textLabel = textRegex.findall(line);
                 if (textLabel):
-                    # print(textLabel);
                     divCount += 1;
                     step += 1;
 
@@ -120,8 +141,9 @@ def main():
                     if (stickerFound):
                         divCount += 1;
 
-                        newMessage.append(stickerFound[0]);
-                        newMessage.append("sticker");
+                        if (outputType == 'xlsx'):
+                            newMessage.append(str(stickerFound[0]));
+                            newMessage.append("sticker");
                         step = 6;
                     else:
                         divCount += checkForDiv(line);
@@ -130,21 +152,51 @@ def main():
 
             elif (step == 5):
                 messageText = line[:-1];
-                # print(messageText);
-
-                newMessage.append(messageText);
-                newMessage.append("text");
+                messageText = messageText.lower();
+                
+                newMessage.append(str(messageText));
+                if (outputType == 'xlsx'):
+                    newMessage.append("text");
                 step += 1;
 
             if (step == 6):
                 allMessages.append(newMessage);
                 step = 0;
 
-        f.close();
+        htmlFile.close();
         fileNumber += 1;
 
-    df = pd.DataFrame.from_records(allMessages);
-    df.to_excel("output.xlsx");
+    if (readError):
+        return;
+
+    print("Writing output file");
+
+    if (outputType == 'xlsx'):
+        df = pd.DataFrame.from_records(allMessages);
+        df.to_excel("storage\\" + outputName + ".xlsx");
+
+    else:
+        for sender in senderList:
+            outputPath = "storage\\" + outputName + "_" + sender.strip() + ".txt";
+
+            with open(outputPath, "w+", encoding="utf-8") as outputFile:
+                for line in allMessages:
+                    if (line[0] == sender and len(line) > 1):
+                        outputFile.write(line[1]+"\n");
+
+    print("Finished!");
+    return;
+
+def parse_arguments():
+
+    parser = argparse.ArgumentParser(description='Create a file with all the messages from a chat.');
+
+    parser.add_argument('path');
+    parser.add_argument('output');
+    parser.add_argument('--type', '-t', default='xlsx', choices=['xlsx', 'txt']);
+    return parser.parse_args();
+
 
 if __name__ == "__main__":
-    main();
+    arguments = parse_arguments();
+    main(arguments);
