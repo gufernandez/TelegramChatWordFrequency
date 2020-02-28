@@ -6,8 +6,8 @@ import argparse
 
 def main(args):
 
-    filePath = "storage\\" + args.path;
-    wordList = args.words;
+    filePath = "storage\\" + args.FILE;
+    wordList = args.WORDS;
 
     try:
         chatFile = open(filePath, "r", encoding="utf-8");
@@ -47,10 +47,10 @@ def main(args):
 
 def parse_arguments():
 
-    parser = argparse.ArgumentParser(description='');
+    parser = argparse.ArgumentParser(description='Obtain the number of times a word or phrase is used in a text (case sensitive)');
 
-    parser.add_argument('path');
-    parser.add_argument('words', nargs='+');
+    parser.add_argument('FILE', help="Name of the file located on the storage/ folder");
+    parser.add_argument('WORDS', nargs='+', help="List of terms to look for. They should be separated by spaces and inside quotes. Example: 'py file \"hello\" \"world\" \"hello world\"'");
     return parser.parse_args();
 
 if __name__ == "__main__":

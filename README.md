@@ -14,25 +14,27 @@ The final tables can be used with any intent, just for the information or to do 
 
 ### Setup Python
 
-  - Download and install Python 3
-  - Install pip
-  - Install pandas library with pip
-
-  pip install pandas
-
+  1. Download and install Python 3;
+  2. Install pip;
+  3. Install pandas library with pip: &nbsp;&nbsp;&nbsp;&nbsp;`pip install pandas`.
 
 ### Setup R
 
-  - Download R (https://cran.r-project.org)
+  1. Download and install [R](https://cran.r-project.org);
+    * Add its folder to the PATH environment variable if you want;
+  2. Install the Text Mining package: &nbsp;&nbsp;&nbsp;&nbsp;`Rscript -e "install.packages('tm', repos='https://cran.rstudio.com')"`
+    * Run it with admin/sudo permissions and with the path to Rscript, if it's not in the PATH variable.
 
 ### Download the Telegram History
 
-  1. Download the Telegram for desktop (https://desktop.telegram.org/);
+  1. Download [Telegram for Desktop](https://desktop.telegram.org/);
   2. Log in;
   3. Select the chat you want to download;
   4. Click on the three dots on the upper right;
-  5. Select "Export chat history"
-  6. Select the options for the download and click
+  5. Select "Export chat history";
+  6. Define the limit as the maximum value (1500 MB) to get all data;
+    * Choose Stickers and GIFs if you want.
+  7. Click on "Export".
 
 ## messagesReader.py
 
@@ -48,10 +50,34 @@ To run it put the history folder exported by Telegram on the 'storage' folder an
   py messagesReader.py [-h] [--outputFile OUTPUTFILE] [--type {xlsx,txt}] FOLDER
 ```
 
-FOLDER: Name of the history folder located in the storage/ directory
---outputFile OUTPUTFILE: Name of the output file with table. If the text version is chosen then the name of each file will be the name of the senders.
---type: Xlsx will output one Excel file with a table of the messages. Txt will output two text file for each user, one with all text messages and the other with all stickers sent.
+ * `FOLDER`: Name of the history folder located in the storage/ directory.
+ * `--outputFile OUTPUTFILE`: Name of the output file with table. If the text version is chosen then t he name of each file will be the name of the senders.
+ * `--type`: Xlsx will output one Excel file with a table of the messages. Txt will output two text file for each user, one with all text messages and the other with all stickers sent.
 
+## wordCounter.py
 
+This script looks for all occurrences of a list of words in a text file. It is case sensitive. The output with the frequency of each word is displayed in the terminal.
 
-### (UNDER DEVELOPMENT...)
+To run it put the text file in the 'storage' folder and then:
+
+```shell
+  py wordCounter.py [-h] FILE WORDS [words ...]
+```
+
+* `FILE`: Name of the file located in the storage/ directory.
+* `WORDS`: List of terms to look for. They should be separated by spaces and inside quotes.
+    * Example: &nbsp;&nbsp;&nbsp;&nbsp;`'py file "hello" "world" "hello world"'`
+
+## wordFreq.R
+
+This script will obtain the [Document Term Matrix](https://en.wikipedia.org/wiki/Document-term_matrix) of a text file.
+
+To achieve a better result, it removes pontuation, extra white spaces, stop words of the chosen language, numbers and the terms: "hrefhttps", "href", "https" due to links shared in chats. It also replaces special characters like "/", "@" and "\\|" for spaces.
+
+If you want to ignore these transformations use the mode "raw" and the matrix will be created without the text treatment. This mode is useful to analyze the frequency of stickers and GIFs in a chat.
+
+To run it put the text file in the 'storage' folder and the:
+
+```shell
+    Rscript wordFreq.R FILE MODE LANG OUTPUT
+```

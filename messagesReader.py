@@ -21,7 +21,7 @@ def checkForDiv (text):
 
 def main(args):
 
-    folderName = args.folder;
+    folderName = args.FOLDER;
     outputName = args.outputFile;
     outputType = args.type;
 
@@ -35,6 +35,7 @@ def main(args):
     if (outputType == 'txt'):
         senderList = [];
         stickerSenders = [];
+        gifSenders = [];
 
     while (readingFiles):
 
@@ -64,7 +65,8 @@ def main(args):
         nameRegex = re.compile(r'class=\"from_name\"');
         joinedRegex = re.compile(r'joined');
         stickerRegex = re.compile(r'href=\"stickers/(.+)\">');
-        gifsRegex = re.compile(r' via @');
+        gifRegex = re.compile(r'href=\"video_files/(.+)\">');
+        otherSenders = re.compile(r' via @');
 
         step = 0;
         divCount = 0;
@@ -76,7 +78,6 @@ def main(args):
             # FIND A MESSAGE
             if (step == 0):
                 foundMessage = messageRegex.findall(line);
-
                 if (foundMessage):
                     divCount = 0;
                     newMessage = [];
@@ -125,7 +126,7 @@ def main(args):
             elif (step == 3):
                 sender = line[:-1];
 
-                special = gifsRegex.findall(line);
+                special = otherSenders.findall(line);
 
                 if (special):
                     step = 0;
@@ -155,9 +156,21 @@ def main(args):
 
                         step = 6;
                     else:
-                        divCount += checkForDiv(line);
-                        if (divCount < 0):
-                            step = 0;
+                        gifFound = gifRegex.findall(line);
+                        if (gifFound):
+                            divCount += 1;
+
+                            newMessage.append(str(gifFound[0]));
+                            newMessage.append("gif");
+                            if (sender not in gifSenders):
+                                gifSenders.append(sender);
+
+                            step = 6;
+
+                        else:
+                            divCount += checkForDiv(line);
+                            if (divCount < 0):
+                                step = 0;
 
             elif (step == 5):
                 messageText = line[:-1];
@@ -191,12 +204,17 @@ def main(args):
             if (sender in stickerSenders):
                 outputFileSticker = open(outputBase+'_sticker.txt', "w+", encoding="utf-8");
 
+            if (sender in gifSenders):
+                outputFileGif = open(outputBase+'_gif.txt', "w+", encoding="utf-8");
+
             for line in allMessages:
                 if (line[0] == sender and len(line) > 2):
                     if (line[2] == 'text'):
                         outputFileText.write(line[1]+"\n");
-                    else:
+                    elif (line[2] == 'sticker'):
                         outputFileSticker.write(line[1]+"\n");
+                    else:
+                        outputFileGif.write(line[1]+"\n");
 
     print("Finished!");
     return;

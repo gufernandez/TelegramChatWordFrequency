@@ -1,24 +1,62 @@
-library("tm")
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly=TRUE)
 
-filePath <- "C:\\Users\\goncalg4\\workplace\\old\\PythonScripts\\TelegramChatWordFrequency\\storage\\output_Chamys.txt"
-text <- readLines(filePath, encoding="UTF-8")
-docs <- Corpus(VectorSource(text))
-inspect(docs)
-toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
-docs <- tm_map(docs, toSpace, "/")
-docs <- tm_map(docs, toSpace, "@")
-docs <- tm_map(docs, toSpace, "\\|")
-docs <- tm_map(docs, removeNumbers)
-docs <- tm_map(docs, removeWords, stopwords("portuguese"))
-docs <- tm_map(docs, removeWords, c("tá", "ta", "pra", "tô", "to", "bem", "mete", "frente", "chegou", "joga", "vai", "vem", "assim", "pro", "vou", "desde", "fiz", "vim", "não", "nao", "logo", "entra", "hora", "muito", "cima", "sim", "ligado", "tchau", "música", "musica", "vários", "varios", "vão", "vao", "todas", "chora", "toma", "lá", "tomar", "som", "vamo", "ponta", "tomo", "sabe", "todo", "chama", "pura", "ver", "fazer", "pega", "falar", "fim", "passa", "tirando", "nada", "pois", "faz", "mim", "sei", "tambem", "jeito", "deu", "cada", "mó", "sao", "são", "nova", "moleque", "muleque", "gente", "pesado", "porque", "pouco", "forte", "problema", "lado", "entao", "daqui", "deu", "cada", "mó", "sao", "são", "nova", "moleque", "muleque", "gente", "pesado", "porque", "pouco", "forte", "problema", "lado", "entao", "daqui"))
-docs <- tm_map(docs, removeWords, c("hrefhttps", "href", "https"))
-docs <- tm_map(docs, removePunctuation)
-docs <- tm_map(docs, stripWhitespace)
+#wordFreq.R Rtest.R pathToFile mode language output
 
-tdm <- TermDocumentMatrix(docs)
+nArgs = length(args)
+if (nArgs==0) {
+  stop("File name not provided", call.=FALSE)
+}
+
+inputFile = args[1]
+
+if (nArgs == 1) {
+    mode = "normal"
+    lang = "portuguese"
+    outputFile <- substr(inputFile, 1, nchar(inputFile)-4)
+} else if (nArgs == 2) {
+    mode = args[2]
+    lang = args[3]
+    outputFile <- substr(inputFile, 1, nchar(inputFile)-4)
+} else {
+    mode = args[2]
+    lang = args[3]
+    outputFile = args[4]
+}
+
+if (mode != "normal" && mode != "raw" ) {
+    stop("Select a valid mode (normal or raw)", call.=FALSE)
+}
+
+library.path <- .libPaths()
+library("tm", lib.loc = library.path[1])
+
+filePath <- paste("storage\\", inputFile, sep="")
+fileText <- readLines(filePath, encoding="UTF-8")
+
+corpusDoc <- Corpus(VectorSource(fileText))
+
+
+if (mode == "normal") {
+    toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+
+    corpusDoc <- tm_map(corpusDoc, toSpace, "/")
+    corpusDoc <- tm_map(corpusDoc, toSpace, "@")
+    corpusDoc <- tm_map(corpusDoc, toSpace, "\\|")
+    corpusDoc <- tm_map(corpusDoc, removeNumbers)
+    corpusDoc <- tm_map(corpusDoc, removeWords, lang)
+    corpusDoc <- tm_map(corpusDoc, removeWords, c("hrefhttps", "href", "https"))
+    corpusDoc <- tm_map(corpusDoc, removePunctuation)
+    corpusDoc <- tm_map(corpusDoc, stripWhitespace)
+}
+
+tdm <- TermDocumentMatrix(corpusDoc)
 removeSparseTerms(tdm, .999)
+
 m <- as.matrix(tdm)
 v <- sort(rowSums(m),decreasing=TRUE)
 d <- data.frame(word = names(v),freq=v)
-head(d, 10)
-write.csv(d,"C:\\Users\\goncalg4\\workplace\\old\\PythonScripts\\TelegramChatWordFrequency\\storage\\output_Chamys.csv", row.names = FALSE)
+
+outputFile <- paste(outputFile, ".csv", sep="")
+outputPath <- paste("storage\\", outputFile, sep="")
+write.csv(d, outputPath, row.names = FALSE)
