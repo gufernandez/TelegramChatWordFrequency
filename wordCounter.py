@@ -25,9 +25,6 @@ def main(args):
         re_str = r''+ re.escape(targetWord);
         regs[targetWord] = re.compile(re_str);
 
-    print(targets);
-    print(targetCount);
-    print(regs);
     print("Reading File:" + filePath);
     fileObject = chatFile.readlines();
 

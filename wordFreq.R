@@ -12,7 +12,7 @@ inputFile = args[1]
 
 if (nArgs == 1) {
     mode = "normal"
-    lang = "portuguese"
+    lang = "pt-br"
     outputFile <- substr(inputFile, 1, nchar(inputFile)-4)
 } else if (nArgs == 2) {
     mode = args[2]
@@ -44,7 +44,7 @@ if (mode == "normal") {
     corpusDoc <- tm_map(corpusDoc, toSpace, "@")
     corpusDoc <- tm_map(corpusDoc, toSpace, "\\|")
     corpusDoc <- tm_map(corpusDoc, removeNumbers)
-    corpusDoc <- tm_map(corpusDoc, removeWords, lang)
+    corpusDoc <- tm_map(corpusDoc, removeWords, stopwords(lang))
     corpusDoc <- tm_map(corpusDoc, removeWords, c("hrefhttps", "href", "https"))
     corpusDoc <- tm_map(corpusDoc, removePunctuation)
     corpusDoc <- tm_map(corpusDoc, stripWhitespace)
